@@ -1,4 +1,4 @@
-# nimi.li
+# nimi-pwa
 
 [**nimi.pages.dev**](https://nimi.pages.dev) is an interactive toki pona dictionary using data from [jasima Linku](https://linku.la/about/jasima/) and jan Sonja's [compounds list](https://tokipona.org/compounds.txt). This fork is based on the original [**nimi.li**](https://nimi.li/)
 

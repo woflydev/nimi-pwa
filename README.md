@@ -1,7 +1,7 @@
 # nimi.li
 
-[**nimi.li**](https://nimi.li) is an interactive toki pona dictionary using data from [jasima Linku](https://linku.la/about/jasima/) and jan Sonja's [compounds list](https://tokipona.org/compounds.txt).
+[**nimi.pages.dev**](https://nimi.pages.dev) is an interactive toki pona dictionary using data from [jasima Linku](https://linku.la/about/jasima/) and jan Sonja's [compounds list](https://tokipona.org/compounds.txt). This fork is based on the original [**nimi.li**](https://nimi.li/)
 
-Use any link like [nimi.li/pona](https://nimi.li/pona) to view a specific word! The link will create an embed with the definition in Discord and any platform that supports page meta.
+Use any link like [nimi.pages.dev/pona](https://nimi.pages.dev/pona) to view a specific word! The link will create an embed with the definition in Discord and any platform that supports page meta such as [**Discord**](https://discord.com/).
 
-Supports offline functionality as a Progressive Web App. _[Thanks woflydev!](https://github.com/woflydev)_
+This fork added offline functionality as a Progressive Web App (PWA). _[Added by woflydev (me)!](https://github.com/woflydev)_

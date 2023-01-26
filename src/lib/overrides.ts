@@ -33,7 +33,6 @@ export const musi = [
 	'suke',
 	'kutopoma',
 	'toma',
-	'konsuno',
 	'nimisin',
 	'nja',
 	'kamalawala',
@@ -47,23 +46,6 @@ export const musi = [
 export const overrides: Record<string, Partial<Word>> = {};
 
 export const newWords: Word[] = [
-	{
-		word: 'konsuno',
-		def: {
-			en: 'to gaslight, to deceive into believing a lie; the act of gaslighting',
-			tok: 'jan li konsuno e jan ante la, jan ante li sona e lon. taso, jan nanpa wan li toki e ni tawa ona: ona li sona ala e lon. ni la jan ante li pilin nasa.'
-		},
-		book: 'none',
-		coined_year: '2022',
-		coined_era: 'post-ku',
-		recognition: null,
-		usage_category: 'obscure',
-		creator: 'waso Wen',
-		commentary:
-			'mi konsuno e sina? ni li lon ala. jan pona sina li toki e nimi tawa sina anu seme?',
-		etymology: 'kon + suno, calque of English gaslight',
-		source_language: 'toki pona'
-	},
 	{
 		word: 'inta',
 		def: {

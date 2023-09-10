@@ -4,18 +4,20 @@
 
 	import type { PageData } from './$types';
 
+	import { outclick } from '$lib/actions/outclick';
 	import type { BookName, UsageCategory, Word } from '$lib/types';
 	import {
 		bookColors,
 		categoryColors,
 		getWordDefinition,
 		getWordRecognition,
-		sortLanguages
+		normalize,
+		sortLanguages,
+		usageCategories
 	} from '$lib/util';
 	import {
 		categories,
 		language,
-		searchMethod,
 		sitelenMode,
 		sortingMethod
 	} from '$lib/stores';
@@ -36,7 +38,7 @@
 	let search = '';
 	let selectedWord: Word | null = null;
 
-	$: fixedSearch = search.trim().toLowerCase();
+	$: fixedSearch = normalize(search);
 
 	$: shownCategories = $categories
 		.filter(category => category.shown)
@@ -50,14 +52,9 @@
 
 	let detailed = false;
 
-	const categoryIndex: Record<UsageCategory, number> = {
-		core: 0,
-		widespread: 1,
-		common: 2,
-		uncommon: 3,
-		rare: 4,
-		obscure: 5
-	};
+	const categoryIndex = Object.fromEntries(
+		usageCategories.map((category, index) => [category, index] as const)
+	) as Record<UsageCategory, number>;
 
 	const azSorter = (a: Word, b: Word) => a.word.localeCompare(b.word);
 	const recognitionSorter = (a: Word, b: Word) =>
@@ -67,6 +64,8 @@
 		return categoryIndex[a.usage_category] - categoryIndex[b.usage_category];
 	};
 
+	let filteredWords: Word[] = [];
+
 	$: genericSorter =
 		$sortingMethod === 'alphabetical'
 			? azSorter
@@ -74,66 +73,69 @@
 			? recognitionSorter
 			: combinedSorter;
 
-	let filteredWords: Word[] = [];
-
 	$: genericFilter = (word: Word) =>
 		shownCategories.includes(word.usage_category) &&
 		shownBooks.includes(word.book);
 
-	$: if ($searchMethod === 'term') {
-		filteredWords = words
-			.filter(genericFilter)
-			.filter(
-				word =>
-					word.word.toLowerCase().includes(fixedSearch) ||
-					distance(word.word, search) <= 1
-			)
+	$: genericFilteredWords = words.filter(genericFilter);
+
+	const scoreMatch = (content: string | undefined) => {
+		if (!content) return 0;
+
+		const includes = content.includes(fixedSearch);
+		const dist = distance(fixedSearch, content);
+		const maxDist = content.length / 3;
+
+		if (!includes && dist > maxDist) return 0;
+
+		let score = 1;
+
+		if (dist <= maxDist) {
+			score += ((maxDist - dist) / maxDist) * 2;
+		}
+
+		if (includes) {
+			score += 1;
+		}
+
+		return score;
+	};
+
+	$: searchFilter = (word: Word) => {
+		if (!search) return true;
+
+		return (
+			scoreMatch(word.word) ||
+			scoreMatch(getWordDefinition(word, $language)) ||
+			scoreMatch(word.ku_data) ||
+			scoreMatch(word.etymology) ||
+			scoreMatch(word.source_language) ||
+			scoreMatch(word.creator) ||
+			scoreMatch(word.commentary)
+		);
+	};
+
+	$: scoreSearch = (word: Word) => {
+		let score = 0;
+
+		score += scoreMatch(word.word) * 100;
+		score += scoreMatch(getWordDefinition(word, $language)) * 50;
+		score += scoreMatch(word.ku_data) * 40;
+		score += scoreMatch(word.etymology) * 30;
+		score += scoreMatch(word.source_language) * 20;
+		score += scoreMatch(word.creator) * 10;
+		score += scoreMatch(word.commentary) * 5;
+
+		return score;
+	};
+
+	$: if (search) {
+		filteredWords = genericFilteredWords
+			.filter(searchFilter)
 			.sort(genericSorter)
-			.sort((a, b) => {
-				if (fixedSearch === '') return 0;
-				if (a.word.toLowerCase() === fixedSearch) return -1;
-				if (b.word.toLowerCase() === fixedSearch) return 1;
-				const aContains = a.word.toLowerCase().includes(fixedSearch);
-				const bContains = b.word.toLowerCase().includes(fixedSearch);
-				if (aContains && bContains) return 0;
-				if (aContains && !bContains) return -1;
-				if (!aContains && bContains) return 1;
-				return distance(a.word, search) - distance(b.word, search);
-			});
-	} else if ($searchMethod === 'definition') {
-		filteredWords = words
-			.filter(genericFilter)
-			.filter(
-				word =>
-					getWordDefinition(word, $language)
-						.toLowerCase()
-						.includes(fixedSearch) ||
-					word.ku_data?.toLowerCase().includes(fixedSearch)
-			)
-			.sort(genericSorter);
-	} else if ($searchMethod === 'creator') {
-		filteredWords = words
-			.filter(genericFilter)
-			.filter(word => word.creator)
-			.filter(
-				word =>
-					word.creator?.toLowerCase().includes(fixedSearch) ||
-					distance(word.creator!.toLowerCase(), search) <= 1
-			)
-			.sort(genericSorter);
-	} else if ($searchMethod === 'origin') {
-		filteredWords = words
-			.filter(genericFilter)
-			.filter(word => word.source_language)
-			.filter(
-				word =>
-					word.source_language?.toLowerCase().includes(fixedSearch) ||
-					distance(word.source_language!.toLowerCase(), search) <= 1 ||
-					word.etymology?.toLowerCase().includes(fixedSearch)
-			)
-			.sort(genericSorter);
+			.sort((a, b) => scoreSearch(b) - scoreSearch(a));
 	} else {
-		filteredWords = words.filter(genericFilter);
+		filteredWords = genericFilteredWords.sort(genericSorter);
 	}
 
 	$: missingDefinitions = Object.values(
@@ -175,12 +177,6 @@
 		/>
 	{/each}
 
-	<ColoredCheckbox
-		bind:checked={detailed}
-		label="sona mute"
-		color="bg-pink-400"
-	/>
-
 	<div class="relative flex justify-center">
 		<button
 			on:click={() => {
@@ -188,7 +184,7 @@
 			}}
 			class="p-0.5 interactable lg:block"
 			class:hidden={moreOptions}
-			title="more"
+			aria-label="more options"
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -209,10 +205,14 @@
 		{#if moreOptions}
 			<div
 				transition:fly|local={{ y: 4, duration: 300 }}
-				on:click|stopPropagation
-				on:touchstart|passive|stopPropagation
-				on:keydown|stopPropagation
-				class="absolute top-full mt-2 p-2 w-max 
+				use:outclick
+				on:outclick={() => {
+					// delay to make clicking on the button also close
+					requestAnimationFrame(() => {
+						moreOptions = false;
+					});
+				}}
+				class="z-10 absolute top-full mt-2 p-2 w-max
 					hidden lg:flex flex-wrap gap-1 sm:gap-x-2 sm:gap-y-1
 					bg-white border-gray-200 border rounded-lg shadow-lg
 					dark:border-gray-800 dark:bg-black"
@@ -231,9 +231,6 @@
 
 {#if moreOptions}
 	<div
-		on:click|stopPropagation
-		on:touchstart|passive|stopPropagation
-		on:keydown|stopPropagation
 		class="mt-2 p-2 flex lg:hidden items-start justify-between gap-2 border border-gray-400 rounded-lg
 			dark:border-gray-800"
 	>
@@ -252,7 +249,7 @@
 				moreOptions = false;
 			}}
 			class="shrink-0 p-0.5 interactable"
-			title="close"
+			aria-label="close options"
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
@@ -272,18 +269,9 @@
 	</div>
 {/if}
 
-<div class="mt-2 flex flex-wrap gap-2">
+<div class="mt-2 flex flex-wrap gap-1 sm:gap-x-2 sm:gap-y-1">
 	<Select
-		options={[
-			{ label: 'Search by Toki Pona', value: 'term' },
-			{ label: 'Search by Definition', value: 'definition' },
-			{ label: 'Search by Creator', value: 'creator' },
-			{ label: 'Search by Origin', value: 'origin' }
-		]}
-		bind:value={$searchMethod}
-	/>
-
-	<Select
+		name="Sorting Method"
 		options={[
 			{ label: 'Sort A-Z by Usage', value: 'combined' },
 			{ label: 'Sort by Usage', value: 'recognition' },
@@ -293,6 +281,7 @@
 	/>
 
 	<Select
+		name="Language"
 		options={sortLanguages(data.languages).map(([code, language]) => {
 			return { label: language.name_endonym, value: code };
 		})}
@@ -300,12 +289,19 @@
 	/>
 
 	<Select
+		name="sitelen type"
 		options={[
 			{ label: 'sitelen pona', value: 'pona' },
 			{ label: 'sitelen sitelen', value: 'sitelen' },
 			{ label: 'sitelen Emosi', value: 'emosi' }
 		]}
 		bind:value={$sitelenMode}
+	/>
+
+	<ColoredCheckbox
+		bind:checked={detailed}
+		label="Detailed View"
+		color="bg-blue-500"
 	/>
 </div>
 
@@ -324,27 +320,18 @@
 {/if}
 
 <p class="mt-2 faded">
-	{filteredWords.length} / {words.length}
+	{filteredWords.length} / {genericFilteredWords.length}
 </p>
 
-<Search
-	placeholder={$searchMethod === 'term'
-		? 'nimi...'
-		: $searchMethod === 'definition'
-		? 'definition...'
-		: $searchMethod === 'creator'
-		? 'creator...'
-		: 'language or etymology...'}
-	bind:value={search}
-/>
+<Search placeholder="o lukin..." bind:value={search} />
 
 <Grid width={detailed ? '30rem' : '24rem'}>
-	{#each filteredWords as word (word.word)}
+	{#each filteredWords as word (word.id)}
 		<WordSpace
 			{word}
 			{detailed}
 			on:click={() => {
-				if (selectedWord?.word === word.word) selectedWord = null;
+				if (selectedWord?.id === word.id) selectedWord = null;
 				else selectedWord = word;
 			}}
 		/>

@@ -36,7 +36,7 @@
 		{placeholder}
 		bind:value
 		bind:this={searchBar}
-		class="p-2 max-w-full w-96 interactable cursor-auto"
+		class="px-4 py-2 max-w-full w-96 focusable cursor-auto"
 	/>
 
 	{#if value}
@@ -52,11 +52,11 @@
 	{/if}
 </div>
 
-<style>
+<style lang="postcss">
 	input[type='search']::-webkit-search-decoration,
 	input[type='search']::-webkit-search-cancel-button,
 	input[type='search']::-webkit-search-results-button,
 	input[type='search']::-webkit-search-results-decoration {
-		display: none;
+		@apply hidden;
 	}
 </style>

@@ -1,10 +1,12 @@
 export type UsageCategory =
-	| 'obscure'
-	| 'rare'
-	| 'uncommon'
-	| 'common'
+	| 'core'
 	| 'widespread'
-	| 'core';
+	| 'common'
+	| 'uncommon'
+	| 'rare'
+	| 'obscure'
+	// not in Linku
+	| 'marginal';
 export type BookName = 'pu' | 'ku suli' | 'ku lili' | 'none';
 export type CoinedEra = 'pre-pu' | 'post-pu' | 'post-ku';
 export type Tag = 'pre-pu ALT' | 'nimi nanpa';
@@ -30,6 +32,11 @@ export interface Credit {
 }
 
 export interface Word {
+	/**
+	 * Not in the Linku object, but added for keying
+	 */
+	id: string;
+
 	word: string;
 	/**
 	 * Maps from language code to definition
@@ -89,12 +96,6 @@ export interface Word {
 	 * Only a few language codes (en, fr, de, eo)
 	 */
 	pu_verbatim?: Record<string, string>;
-
-	/**
-	 * This property is not in Linku but it's an added tag for words
-	 * which generally aren't used in serious contexts or toki pona taso
-	 */
-	musi?: boolean;
 }
 
 export interface Font {

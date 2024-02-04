@@ -9,6 +9,7 @@
 		getWordDisplayRecognition
 	} from '$lib/util';
 
+	import Collapsible from '$lib/components/Collapsible.svelte';
 	import Copy from '$lib/components/Copy.svelte';
 	import Details from '$lib/components/Details.svelte';
 	import Link from '$lib/components/Link.svelte';
@@ -26,6 +27,11 @@
 	function play() {
 		audio?.play();
 	}
+
+	$: audioUrl =
+		possibleWord?.audio?.['jan_lakuse'] ??
+		possibleWord?.audio?.['kala_asi'] ??
+		null;
 </script>
 
 <Details bind:value={possibleWord} key={word => word.id} let:value={word}>
@@ -35,8 +41,8 @@
 		<div class="ml-auto flex items-center gap-2">
 			<a href="/{word.id}" class="px-2 py-1 interactable">more</a>
 
-			{#if word.audio?.['jan_lakuse']}
-				<audio src={word.audio['jan_lakuse']} bind:this={audio} />
+			{#if audioUrl}
+				<audio src={audioUrl} bind:this={audio} />
 
 				<button class="p-1 interactable" on:click={play}>
 					<svg
@@ -84,7 +90,7 @@
 
 	{#if word.ku_data}
 		<p class="mt-2">
-			{word.ku_data}
+			<Collapsible content={word.ku_data} length={250} />
 		</p>
 	{/if}
 
@@ -126,12 +132,12 @@
 	{#if word.sitelen_pona}
 		<h3 class="mt-2 text-lg">sitelen pona</h3>
 
-		<span class="font-medium font-pona text-4xl">
+		<span class="font-pona text-4xl">
 			{word.sitelen_pona}
 		</span>
 
 		{#if word.sitelen_pona_etymology}
-			<p>
+			<p class="faded">
 				{word.sitelen_pona_etymology}
 			</p>
 		{/if}

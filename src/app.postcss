@@ -7,7 +7,7 @@
 		font-family: 'Fairfax Pona HD';
 		src: url('fonts/FairfaxPonaHD.woff2') format('woff2'),
 			url('fonts/FairfaxPonaHD.woff') format('woff');
-		font-weight: 500;
+		font-weight: normal;
 		font-style: normal;
 		font-display: swap;
 	}
@@ -22,30 +22,27 @@
 	}
 
 	@font-face {
-		font-family: 'SFProText';
-		src: url('fonts/subset-SFProText-Bold.woff2') format('woff2'),
-			url('fonts/subset-SFProText-Bold.woff') format('woff');
-		font-weight: bold;
+		font-family: 'Inter';
 		font-style: normal;
+		font-weight: 400;
 		font-display: swap;
+		src: url('fonts/Inter-Regular.woff2') format('woff2');
 	}
 
 	@font-face {
-		font-family: 'SFProText';
-		src: url('fonts/subset-SFProText-Regular.woff2') format('woff2'),
-			url('fonts/subset-SFProText-Regular.woff') format('woff');
-		font-weight: normal;
-		font-style: normal;
-		font-display: swap;
-	}
-
-	@font-face {
-		font-family: 'SFProText';
-		src: url('fonts/subset-SFProText-RegularItalic.woff2') format('woff2'),
-			url('fonts/subset-SFProText-RegularItalic.woff') format('woff');
-		font-weight: normal;
+		font-family: 'Inter';
 		font-style: italic;
+		font-weight: 400;
 		font-display: swap;
+		src: url('fonts/Inter-Italic.woff2') format('woff2');
+	}
+
+	@font-face {
+		font-family: 'Inter';
+		font-style: normal;
+		font-weight: 700;
+		font-display: swap;
+		src: url('fonts/Inter-Bold.woff2') format('woff2');
 	}
 
 	html {
@@ -92,6 +89,32 @@
 	h5,
 	h6 {
 		@apply font-display;
+	}
+
+	@keyframes highlight-light {
+		0% {
+			@apply bg-blue-100;
+		}
+		100% {
+			@apply bg-white;
+		}
+	}
+
+	@keyframes highlight-dark {
+		0% {
+			@apply bg-slate-900;
+		}
+		100% {
+			@apply bg-black;
+		}
+	}
+
+	:target {
+		animation: highlight-light 3s ease-in-out;
+	}
+
+	.dark :target {
+		animation: highlight-dark 3s ease-in-out;
 	}
 
 	.no-transition {

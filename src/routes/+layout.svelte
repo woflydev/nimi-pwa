@@ -10,7 +10,7 @@
 	import { dev } from '$app/environment';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 
-	import { darkMode } from '$lib/stores';
+	import { darkMode, screenWidth } from '$lib/stores';
 
 	const routes = [
 		{ name: 'vocabulary', href: '/' },
@@ -21,7 +21,7 @@
 	const commonClasses =
 		'p-2 rounded-lg sm:rounded-t-none border sm:border-t-0 border-gray-200 dark:border-gray-800 transition-colors';
 	const hoverableClasses =
-		'outline-none focus-visible:outline-gray-500 hocus:border-gray-400 dark:hocus:border-gray-700';
+		'outline-none focus-visible:outline-gray-500 hocus-visible:border-gray-400 dark:hocus-visible:border-gray-700';
 
 	let opened = false;
 
@@ -68,21 +68,6 @@
 	});
 </script>
 
-<svelte:head>
-	<script>
-		{
-			const darkModeValue = localStorage.getItem('darkMode');
-
-			if (darkModeValue !== null) {
-				document.documentElement.classList.toggle(
-					'dark',
-					darkModeValue === 'true'
-				);
-			}
-		}
-	</script>
-</svelte:head>
-
 <svelte:window
 	on:click={() => {
 		opened = false;
@@ -92,7 +77,10 @@
 	}}
 />
 
-<div class="px-8 lg:px-16 max-w-screen-2xl m-auto font-text">
+<div
+	class="px-4 sm:px-8 lg:px-16 m-auto"
+	class:max-w-screen-xl={$screenWidth === 'large'}
+>
 	<nav class="pt-4 sm:pt-0 flex justify-between">
 		<div class="hidden sm:flex gap-2">
 			{#each routes as route}
@@ -143,7 +131,12 @@
 								{route.name}
 							</span>
 						{:else}
-							<a href={route.href} class="p-2">
+							<a
+								href={route.href}
+								class="p-2"
+								on:click|stopPropagation
+								on:touchstart|passive|stopPropagation
+							>
 								{route.name}
 							</a>
 						{/if}
@@ -178,6 +171,52 @@
 					</svg>
 				</button>
 			{/if}
+
+			<button
+				class="max-xl:hidden {commonClasses} {hoverableClasses} cursor-pointer"
+				on:click={() => {
+					if ($screenWidth === 'full') {
+						$screenWidth = 'large';
+					} else {
+						$screenWidth = 'full';
+					}
+				}}
+				role="checkbox"
+				aria-checked={$screenWidth === 'full'}
+				aria-label="toggle full width"
+			>
+				{#if $screenWidth === 'large'}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+						class="w-6 h-6"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"
+						/>
+					</svg>
+				{:else}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+						class="w-6 h-6"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25"
+						/>
+					</svg>
+				{/if}
+			</button>
 
 			<button
 				class="{commonClasses} {hoverableClasses} cursor-pointer"

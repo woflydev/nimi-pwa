@@ -19,14 +19,17 @@
 		categories,
 		language,
 		sitelenMode,
-		sortingMethod
+		sortingMethod,
+		viewMode
 	} from '$lib/stores';
 
 	import ColoredCheckbox from '$lib/components/ColoredCheckbox.svelte';
+	import GlyphEntry from './GlyphEntry.svelte';
 	import Grid from '$lib/components/Grid.svelte';
 	import Search from '$lib/components/Search.svelte';
 	import Select from '$lib/components/Select.svelte';
 	import WordDetails from './WordDetails.svelte';
+	import WordEntry from './WordEntry.svelte';
 	import WordSpace from './WordSpace.svelte';
 
 	export let data: PageData;
@@ -49,8 +52,6 @@
 		shown: true
 	}));
 	$: shownBooks = books.filter(book => book.shown).map(book => book.name);
-
-	let detailed = false;
 
 	const categoryIndex = Object.fromEntries(
 		usageCategories.map((category, index) => [category, index] as const)
@@ -77,7 +78,7 @@
 		shownCategories.includes(word.usage_category) &&
 		shownBooks.includes(word.book);
 
-	$: genericFilteredWords = words.filter(genericFilter);
+	$: genericFilteredWords = words.filter(genericFilter).sort(genericSorter);
 
 	const scoreMatch = (content: string | undefined) => {
 		if (!content) return 0;
@@ -132,10 +133,9 @@
 	$: if (search) {
 		filteredWords = genericFilteredWords
 			.filter(searchFilter)
-			.sort(genericSorter)
 			.sort((a, b) => scoreSearch(b) - scoreSearch(a));
 	} else {
-		filteredWords = genericFilteredWords.sort(genericSorter);
+		filteredWords = genericFilteredWords;
 	}
 
 	$: missingDefinitions = Object.values(
@@ -271,6 +271,17 @@
 
 <div class="mt-2 flex flex-wrap gap-1 sm:gap-x-2 sm:gap-y-1">
 	<Select
+		name="View"
+		options={[
+			{ label: 'Normal View', value: 'normal' },
+			{ label: 'Detailed View', value: 'detailed' },
+			{ label: 'Compact View', value: 'compact' },
+			{ label: 'Glyph View', value: 'glyphs' }
+		]}
+		bind:value={$viewMode}
+	/>
+
+	<Select
 		name="Sorting Method"
 		options={[
 			{ label: 'Sort A-Z by Usage', value: 'combined' },
@@ -297,20 +308,14 @@
 		]}
 		bind:value={$sitelenMode}
 	/>
-
-	<ColoredCheckbox
-		bind:checked={detailed}
-		label="Detailed View"
-		color="bg-blue-500"
-	/>
 </div>
 
 {#if missingDefinitions}
-	<p class="mt-4">
+	<p class="mt-2">
 		<span class="font-bold">o lukin a!</span>
 		kon pi
 		{data.languages[$language].name_toki_pona}
-		li lon nimi ale ala. kon ni li kepeken toki Inli.
+		li lon ala ale. nimi ni la, toki Inli li lon.
 	</p>
 	<p>
 		<span class="font-bold">Warning!</span>
@@ -325,18 +330,49 @@
 
 <Search placeholder="o lukin..." bind:value={search} />
 
-<Grid width={detailed ? '30rem' : '24rem'}>
-	{#each filteredWords as word (word.id)}
-		<WordSpace
-			{word}
-			{detailed}
-			on:click={() => {
-				if (selectedWord?.id === word.id) selectedWord = null;
-				else selectedWord = word;
-			}}
-		/>
-	{/each}
-</Grid>
+{#if $viewMode === 'compact'}
+	<div class="mt-4 grid">
+		{#each filteredWords as word (word.id)}
+			<WordEntry
+				{word}
+				on:click={() => {
+					if (selectedWord?.id === word.id) selectedWord = null;
+					else selectedWord = word;
+				}}
+			/>
+		{/each}
+	</div>
+{:else if $viewMode === 'glyphs'}
+	<div class="mt-4 grid gap-4 glyphs">
+		{#each filteredWords as word (word.id)}
+			<GlyphEntry
+				{word}
+				on:click={() => {
+					if (selectedWord?.id === word.id) selectedWord = null;
+					else selectedWord = word;
+				}}
+			/>
+		{/each}
+	</div>
+{:else}
+	<Grid width={$viewMode === 'detailed' ? '24rem' : '20rem'}>
+		{#each filteredWords as word (word.id)}
+			<WordSpace
+				{word}
+				detailed={$viewMode === 'detailed'}
+				on:click={() => {
+					if (selectedWord?.id === word.id) selectedWord = null;
+					else selectedWord = word;
+				}}
+			/>
+		{/each}
+	</Grid>
+{/if}
+
+{#if !filteredWords.length}
+	<p>wile sina la, nimi li lon ala!</p>
+	<p class="faded">Your query didn't match any words!</p>
+{/if}
 
 <WordDetails
 	bind:word={selectedWord}
@@ -356,3 +392,9 @@
 		}
 	}}
 />
+
+<style lang="postcss">
+	.glyphs {
+		grid-template-columns: repeat(auto-fill, minmax(theme('width.24'), 1fr));
+	}
+</style>

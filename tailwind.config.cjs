@@ -8,8 +8,8 @@ module.exports = {
 	theme: {
 		extend: {
 			fontFamily: {
+				sans: ['"Inter"', ...defaultTheme.fontFamily.sans],
 				pona: ['"Fairfax Pona HD"', ...defaultTheme.fontFamily.sans],
-				text: ['"SFProText"', ...defaultTheme.fontFamily.sans],
 				display: ['"SFRounded"', ...defaultTheme.fontFamily.sans]
 			}
 		}
@@ -18,6 +18,11 @@ module.exports = {
 		plugin(function ({ addVariant }) {
 			addVariant('hocus', ['&:hover', '&:focus']);
 			addVariant('hocus-visible', ['&:hover', '&:focus-visible']);
+			addVariant('group-hocus', ['.group:hover &', '.group:focus &']);
+			addVariant('group-hocus-visible', [
+				'.group:hover &',
+				'.group:focus-visible &'
+			]);
 		})
 	]
 };

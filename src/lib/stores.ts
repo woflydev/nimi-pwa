@@ -83,3 +83,12 @@ export const sitelenMode = savedWritable<'pona' | 'sitelen' | 'emosi'>(
 	'sitelenMode',
 	'pona'
 );
+
+export const viewMode = savedWritable<
+	'normal' | 'detailed' | 'compact' | 'glyphs'
+>('viewMode', 'normal');
+
+export const screenWidth = savedWritable<'full' | 'large'>(
+	'screenWidth',
+	'large'
+);
